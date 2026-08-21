@@ -1,144 +1,74 @@
 SELECT
     annee,
     canal_acquisition,
-    niveau,
-    motif_rejet,
     nb_commandes,
-
     ROUND(
-        100.0 * nb_commandes
-        / SUM(
-            CASE
-                WHEN niveau = 'TOTAL'
-                THEN nb_commandes
-                ELSE 0
-            END
-          ) OVER (
-              PARTITION BY annee, canal_acquisition
-          ),
+        100.0 * nb_commandes / total_annee,
         2
-    ) AS pourcentage_total
-
+    ) AS pct_total
 FROM
 (
-    /* =========================================================
-       1. TOTAL
-       ========================================================= */
     SELECT
-        YEAR(date_saisie) AS annee,
+        annee,
         canal_acquisition,
-        'TOTAL' AS niveau,
-        NULL AS motif_rejet,
-        COUNT(DISTINCT id_commande) AS nb_commandes
+        nb_commandes,
+        total_annee
 
-    FROM commande_carnet_chezki
+    FROM
+    (
+        /* Nombre de commandes par année et par canal */
+        SELECT
+            YEAR(date_saisie) AS annee,
+            canal_acquisition,
+            COUNT(DISTINCT id_commande) AS nb_commandes
 
-    WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
+        FROM commande_carnet_chezki
 
-    GROUP BY
-        YEAR(date_saisie),
-        canal_acquisition
+        WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
 
+        GROUP BY
+            YEAR(date_saisie),
+            canal_acquisition
+    ) commandes_canal
 
-    UNION ALL
+    LEFT JOIN
+    (
+        /* Nombre total de commandes par année */
+        SELECT
+            YEAR(date_saisie) AS annee,
+            COUNT(DISTINCT id_commande) AS total_annee
 
+        FROM commande_carnet_chezki
 
-    /* =========================================================
-       2. REJET / NON-REJET
-       ========================================================= */
-    SELECT
-        YEAR(date_saisie) AS annee,
-        canal_acquisition,
+        WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
 
-        CASE
-            WHEN motif_rejet IS NULL
-              OR TRIM(motif_rejet) = ''
-            THEN 'NON-REJET'
-            ELSE 'REJET'
-        END AS niveau,
+        GROUP BY
+            YEAR(date_saisie)
+    ) commandes_total
 
-        NULL AS motif_rejet,
+    ON commandes_canal.annee = commandes_total.annee
+) detail
 
-        COUNT(DISTINCT id_commande) AS nb_commandes
+UNION ALL
 
-    FROM commande_carnet_chezki
+/* Ligne TOTAL par année */
+SELECT
+    YEAR(date_saisie) AS annee,
+    'TOTAL' AS canal_acquisition,
+    COUNT(DISTINCT id_commande) AS nb_commandes,
+    100.00 AS pct_total
 
-    WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
+FROM commande_carnet_chezki
 
-    GROUP BY
-        YEAR(date_saisie),
-        canal_acquisition,
+WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
 
-        CASE
-            WHEN motif_rejet IS NULL
-              OR TRIM(motif_rejet) = ''
-            THEN 'NON-REJET'
-            ELSE 'REJET'
-        END
-
-
-    UNION ALL
-
-
-    /* =========================================================
-       3. DETAIL DES MOTIFS DE REJET
-       ========================================================= */
-    SELECT
-        YEAR(date_saisie) AS annee,
-        canal_acquisition,
-
-        'REJET' AS niveau,
-
-        motif_rejet,
-
-        COUNT(DISTINCT id_commande) AS nb_commandes
-
-    FROM commande_carnet_chezki
-
-    WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
-
-      AND motif_rejet IS NOT NULL
-      AND TRIM(motif_rejet) <> ''
-
-    GROUP BY
-        YEAR(date_saisie),
-        canal_acquisition,
-        motif_rejet
-
-) synthese
+GROUP BY
+    YEAR(date_saisie)
 
 ORDER BY
     annee,
-    canal_acquisition,
     CASE
-        WHEN niveau = 'TOTAL' THEN 1
-        WHEN niveau = 'NON-REJET' THEN 2
-        WHEN niveau = 'REJET' AND motif_rejet IS NULL THEN 3
-        ELSE 4
+        WHEN canal_acquisition = 'TOTAL' THEN 2
+        ELSE 1
     END,
     nb_commandes DESC;
-
-
-
-
-------------------
-
-SELECT
-    s.annee,
-    s.canal_acquisition,
-    rc.libelle_canal_acquisition,
-    s.niveau,
-    s.motif_rejet,
-    rm.libelle_motif_rejet,
-    s.nb_commandes,
-    s.pct_total,
-    s.pct_rejets
-
-FROM table_synthese_commandes s
-
-LEFT JOIN referentiel_canal_acquisition rc
-    ON s.canal_acquisition = rc.code_canal_acquisition
-
-LEFT JOIN referentiel_motif_rejet rm
-    ON s.motif_rejet = rm.code_motif_rejet
-;
