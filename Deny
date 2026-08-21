@@ -2,73 +2,50 @@ SELECT
     annee,
     canal_acquisition,
     nb_commandes,
+    total_annee,
     ROUND(
         100.0 * nb_commandes / total_annee,
         2
     ) AS pct_total
+
 FROM
 (
     SELECT
-        annee,
-        canal_acquisition,
-        nb_commandes,
-        total_annee
+        YEAR(`date-de-saisie-commande`) AS annee,
+        `canal-acquisition` AS canal_acquisition,
+        COUNT(DISTINCT `identifiant-commande`) AS nb_commandes,
 
-    FROM
-    (
-        /* Nombre de commandes par année et par canal */
-        SELECT
-            YEAR(date_saisie) AS annee,
-            canal_acquisition,
-            COUNT(DISTINCT id_commande) AS nb_commandes
+        SUM(
+            COUNT(DISTINCT `identifiant-commande`)
+        ) OVER (
+            PARTITION BY YEAR(`date-de-saisie-commande`)
+        ) AS total_annee
 
-        FROM commande_carnet_chezki
+    FROM commande_carnet_chezki
 
-        WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
+    WHERE YEAR(`date-de-saisie-commande`) IN (2024, 2025, 2026)
 
-        GROUP BY
-            YEAR(date_saisie),
-            canal_acquisition
-    ) commandes_canal
-
-    LEFT JOIN
-    (
-        /* Nombre total de commandes par année */
-        SELECT
-            YEAR(date_saisie) AS annee,
-            COUNT(DISTINCT id_commande) AS total_annee
-
-        FROM commande_carnet_chezki
-
-        WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
-
-        GROUP BY
-            YEAR(date_saisie)
-    ) commandes_total
-
-    ON commandes_canal.annee = commandes_total.annee
-) detail
+    GROUP BY
+        YEAR(`date-de-saisie-commande`),
+        `canal-acquisition`
+) t
 
 UNION ALL
 
-/* Ligne TOTAL par année */
 SELECT
-    YEAR(date_saisie) AS annee,
+    YEAR(`date-de-saisie-commande`) AS annee,
     'TOTAL' AS canal_acquisition,
-    COUNT(DISTINCT id_commande) AS nb_commandes,
+    COUNT(DISTINCT `identifiant-commande`) AS nb_commandes,
+    COUNT(DISTINCT `identifiant-commande`) AS total_annee,
     100.00 AS pct_total
 
 FROM commande_carnet_chezki
 
-WHERE YEAR(date_saisie) IN (2024, 2025, 2026)
+WHERE YEAR(`date-de-saisie-commande`) IN (2024, 2025, 2026)
 
 GROUP BY
-    YEAR(date_saisie)
+    YEAR(`date-de-saisie-commande`)
 
 ORDER BY
     annee,
-    CASE
-        WHEN canal_acquisition = 'TOTAL' THEN 2
-        ELSE 1
-    END,
-    nb_commandes DESC;
+    canal_acquisition;
