@@ -1,0 +1,41 @@
+Bonjour Olivier,
+
+J’espère que tu vas bien.
+
+Comme nous en avons parlé face à face, je reviens vers toi concernant le sujet des commandes de chèques que tu avais soumis via le formulaire.
+
+Suite à notre échange sur site, tu avais bien raison : il existe toujours, en 2026, des transactions correspondant à des demandes de commandes de chèques effectuées via des automates. La notion existe donc toujours.
+
+Pour information, nous disposons d’une table dédiée à ce type de transactions. Cette table regroupe notamment les consultations de solde, les demandes d’historique, les éditions de RIB ainsi que les commandes de chèques.
+
+Pour déterminer si une transaction a abouti ou non, nous avons une colonne dédiée appelée « Top Annule », comme dans la table des retraits, si tu t’en souviens. Nous avons deux valeurs : « 0 » pour les transactions abouties et « 1 » pour les transactions échouées ou annulées.
+
+Néanmoins, sur la table dédiée à ce type d’opérations, nous ne retrouvons que des transactions avec « Top Annule = 0 ». Nous n’avons donc, à ce stade, que les transactions considérées comme abouties.
+
+Sur ce point, je me permets de formuler une hypothèse que tu pourras bien sûr me confirmer ou me corriger. D’après ce que nous avons compris avec Laurent Astruc, il est possible que la commande soit automatiquement enregistrée au niveau de l’automate, puis que la vérification de l’éligibilité du client, les éventuels contrôles et les motifs de rejet soient traités ultérieurement. Cela pourrait expliquer pourquoi nous ne retrouvons que des « Top Annule = 0 » dans la table des automates.
+
+Néanmoins, ce que je remarque, c’est qu’il existe un écart entre tes chiffres et les miens. De ton côté, tu m’indiques avoir [X] commandes, sans pouvoir déterminer si elles sont toutes abouties ou non. De mon côté, j’en retrouve [Y], qui sont toutes en « Top Annule = 0 ».
+
+On voit donc bien qu’il existe un écart de [Z] commandes entre les deux volumes. Une hypothèse pourrait être que nous ne recevons dans notre base que les opérations acceptées et que le delta correspond aux transactions qui n’ont finalement pas abouti ou qui ont été rejetées.
+
+À ce stade, je peux confirmer que, dans la table des automates dédiée à ce type d’opérations, nous n’avons aucune information permettant d’identifier un rejet ou son motif.
+
+En revanche, nous avons également une table dédiée aux commandes de chèques. J’ai pu faire une première analyse rapide de cette table : elle contient bien une colonne relative aux motifs de rejet. En revanche, pour le moment, je ne vois pas de notion permettant de déterminer si les commandes de chèques correspondent spécifiquement à des commandes effectuées via un automate. La table semble regrouper l’ensemble des commandes de chèques et je ne vois pas, à première vue, de colonne permettant de filtrer les commandes effectuées via les automates.
+
+Je précise toutefois que je n’ai pas eu l’occasion de manipuler cette table en profondeur. Je ne peux donc pas affirmer qu’il n’existe aucun moyen de faire ce rapprochement.
+
+Je vais continuer mes recherches et me rapprocher des spécialistes de la base afin de vérifier s’il existe un indicateur permettant d’identifier si les commandes de chèques ont été effectuées via un automate.
+
+Pour le moment, c’est donc tout ce que je peux te transmettre comme éléments. Je joins également le fichier Excel avec les informations que j’ai pu récupérer.
+
+Pour information, Hervé rentre lundi. Je vais également voir avec lui sur ce point ainsi que sur le synoptique du projet Data/IA que nous avons évoqué ensemble à plusieurs reprises, notamment au regard de tes remarques.
+
+Je reviendrai vers toi si j’ai un nouvel élément permettant d’identifier ces commandes via les automates.
+
+Si tu le souhaites, nous pourrons également faire un petit point lundi prochain sur l’ensemble des sujets concernant les automates, et en profiter pour échanger avec Hervé puisqu’il sera de retour.
+
+Je te remercie et te souhaite un excellent week-end.
+
+Bonne journée,
+
+[Prénom]
