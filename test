@@ -1,5 +1,28 @@
-import os, psutil
-print("mémoire du serveur :", round(psutil.virtual_memory().total / 1e9), "Go, libre :", round(psutil.virtual_memory().available / 1e9), "Go")
-for f in ["/sys/fs/cgroup/memory/memory.limit_in_bytes", "/sys/fs/cgroup/memory.max"]:
-    if os.path.exists(f):
-        print("plafond du noyau :", open(f).read().strip())
+import os, resource
+
+def lire(chemin):
+    try:
+        with open(chemin) as f:
+            return f.read().strip()
+    except Exception:
+        return None
+
+# 1. mémoire du serveur
+infos = {}
+for ligne in (lire("/proc/meminfo") or "").splitlines():
+    cle, valeur = ligne.split(":", 1)
+    infos[cle] = int(valeur.split()[0]) / 1e6          # en Go
+print("Mémoire du serveur : {:.0f} Go, disponible : {:.0f} Go".format(infos.get("MemTotal", 0), infos.get("MemAvailable", 0)))
+
+# 2. plafond du noyau du notebook (c'est lui qui fait mourir le kernel)
+plafond = None
+for chemin in ["/sys/fs/cgroup/memory.max", "/sys/fs/cgroup/memory/memory.limit_in_bytes"]:
+    v = lire(chemin)
+    if v:
+        plafond = v
+        print("Plafond du noyau ({}) : {}".format(chemin, "aucun" if v == "max" or int(v) > 1e15 else "{:.1f} Go".format(int(v) / 1e9)))
+if plafond is None:
+    print("Plafond du noyau : introuvable")
+
+# 3. ce que le noyau a déjà utilisé au plus haut
+print("Pic de mémoire de ce noyau : {:.1f} Go".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6))
