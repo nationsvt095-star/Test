@@ -1,0 +1,5 @@
+import os, psutil
+print("mémoire du serveur :", round(psutil.virtual_memory().total / 1e9), "Go, libre :", round(psutil.virtual_memory().available / 1e9), "Go")
+for f in ["/sys/fs/cgroup/memory/memory.limit_in_bytes", "/sys/fs/cgroup/memory.max"]:
+    if os.path.exists(f):
+        print("plafond du noyau :", open(f).read().strip())
