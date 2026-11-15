@@ -1,28 +1,11 @@
-import os, resource
+CAS_TESTS = [
+    # 1. inversion de cassettes (cas confirmé)
+    {"gab": "953921", "date": "2026-11-05", "quoi": "inversion de cassettes 10 € / 20 €"},
 
-def lire(chemin):
-    try:
-        with open(chemin) as f:
-            return f.read().strip()
-    except Exception:
-        return None
+    # 2. GAB dégradés pendant les manifestations : une ligne par GAB de ta fiche de suivi
+    {"gab": "NUMERO_GAB_1", "date": "2026-10-17", "avant": 7, "apres": 21, "quoi": "GAB dégradé lors des manifestations"},
+    {"gab": "NUMERO_GAB_2", "date": "2026-10-17", "avant": 7, "apres": 21, "quoi": "GAB dégradé lors des manifestations"},
 
-# 1. mémoire du serveur
-infos = {}
-for ligne in (lire("/proc/meminfo") or "").splitlines():
-    cle, valeur = ligne.split(":", 1)
-    infos[cle] = int(valeur.split()[0]) / 1e6          # en Go
-print("Mémoire du serveur : {:.0f} Go, disponible : {:.0f} Go".format(infos.get("MemTotal", 0), infos.get("MemAvailable", 0)))
-
-# 2. plafond du noyau du notebook (c'est lui qui fait mourir le kernel)
-plafond = None
-for chemin in ["/sys/fs/cgroup/memory.max", "/sys/fs/cgroup/memory/memory.limit_in_bytes"]:
-    v = lire(chemin)
-    if v:
-        plafond = v
-        print("Plafond du noyau ({}) : {}".format(chemin, "aucun" if v == "max" or int(v) > 1e15 else "{:.1f} Go".format(int(v) / 1e9)))
-if plafond is None:
-    print("Plafond du noyau : introuvable")
-
-# 3. ce que le noyau a déjà utilisé au plus haut
-print("Pic de mémoire de ce noyau : {:.1f} Go".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6))
+    # 3. rafale de cartes UnionPay : un ou deux GAB touchés ce jour-là
+    {"gab": "NUMERO_GAB_UPI", "date": "2026-03-05", "quoi": "rafale de cartes exotiques UnionPay"},
+]
