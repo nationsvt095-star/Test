@@ -1,1 +1,33 @@
-
+RESEAUX_RECORDS = [r for r in ["cup", "diners", "jcb", "amex", "trionis", "exotique"] if "nb_ret_" + r in jour.columns]
+records, synthese_records = [], []
+for r in RESEAUX_RECORDS:
+    c_ = "nb_ret_" + r
+    _idx_r = jour.loc[jour[c_] > 0, c_].nlargest(TOP_RECORDS).index
+    _top = jour.loc[_idx_r].copy()          # seulement les lignes des records
+    if "hab_" + c_ not in _top.columns:
+        _top["hab_" + c_] = hab28_pour(c_, _idx_r)          # l'habitude, calculée seulement pour les GAB des records
+    _top["réseau"] = LIB_EXO.get(r, r)
+    _top["montant (€)"] = _top["montant_" + r] if "montant_" + r in _top.columns else np.nan
+    # habitude vide (GAB sans historique) -> 0 avant la division, sinon NaN -> astype(int) plante
+    _h = _top["hab_" + c_].fillna(0)
+    _top["fois l'habitude"] = np.where(_h < 0.1, "n'en voit jamais",
+                                       "× " + (_top[c_] / _h.clip(lower=0.1)).round(0).fillna(0).astype(int).astype(str))
+    _top = _top.rename(columns={c_: "retraits", "hab_" + c_: "habitude par jour (28 j)"})
+    records.append(_top[["réseau", "date_jour", "num_automate"] + [c for c in ["ville", "code_postal"] if c in _top.columns] + ["retraits", "montant (€)", "habitude par jour (28 j)", "fois l'habitude", "niveau", "rang_jour"]])
+    _pj = jour.groupby("date_jour")[c_].sum()
+    _g1 = _top.iloc[0] if len(_top) else None
+    synthese_records.append({"réseau": LIB_EXO.get(r, r), "retraits sur la période": jour[c_].sum(), "GAB qui en ont vu": int((jour.groupby("num_automate")[c_].sum() > 0).sum()),
+                             "record d'un GAB en un jour": "{} retraits — GAB {} le {}".format(int(_g1["retraits"]), _g1["num_automate"], _g1["date_jour"].strftime("%d/%m/%Y")) if _g1 is not None else "-",
+                             "record du parc en un jour": "{} retraits le {}".format(int(_pj.max()), _pj.idxmax().strftime("%d/%m/%Y")) if _pj.max() > 0 else "-",
+                             "un jour ordinaire (parc, médiane)": _pj.median()})
+records = pd.concat(records, ignore_index=True) if records else pd.DataFrame()
+synthese_records = pd.DataFrame(synthese_records)
+bandeau("Les records des réseaux exotiques", "sur toute la fiche, du {} au {}".format(DEBUT_PERIODE.strftime("%d/%m/%Y"), FIN.strftime("%d/%m/%Y")))
+display(tableau(synthese_records, "Réseau par réseau : volume, GAB concernés et records", dec=1))
+for r in RESEAUX_RECORDS:
+    _t = records[records["réseau"] == LIB_EXO.get(r, r)]
+    if len(_t):
+        g_barres(["{} — {}".format(a_.strftime("%d/%m/%Y"), b_) for a_, b_ in zip(_t["date_jour"], _t["num_automate"])][::-1],
+                 [("retraits", _t["retraits"].values[::-1], "#e36209"), ("habitude du GAB", _t["habitude par jour (28 j)"].fillna(0).round(1).values[::-1], GRIS_CLAIR)],
+                 "{} : les {} journées record d'un GAB (orange), face à son habitude (gris)".format(LIB_EXO.get(r, r), len(_t)), hauteur=max(280, 30 * len(_t)), horizontal=True)
+display(tableau(records.rename(columns={"date_jour": "jour", "num_automate": "GAB", "rang_jour": "rang du jour", "code_postal": "code postal"}), "Tous les records (l'Excel les reprend dans l'onglet « Records réseaux exotiques »)", n=60))
