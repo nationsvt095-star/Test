@@ -1,11 +1,4 @@
-CAS_TESTS = [
-    # 1. inversion de cassettes (cas confirmé)
-    {"gab": "953921", "date": "2026-11-05", "quoi": "inversion de cassettes 10 € / 20 €"},
-
-    # 2. GAB dégradés pendant les manifestations : une ligne par GAB de ta fiche de suivi
-    {"gab": "NUMERO_GAB_1", "date": "2026-10-17", "avant": 7, "apres": 21, "quoi": "GAB dégradé lors des manifestations"},
-    {"gab": "NUMERO_GAB_2", "date": "2026-10-17", "avant": 7, "apres": 21, "quoi": "GAB dégradé lors des manifestations"},
-
-    # 3. rafale de cartes UnionPay : un ou deux GAB touchés ce jour-là
-    {"gab": "NUMERO_GAB_UPI", "date": "2026-03-05", "quoi": "rafale de cartes exotiques UnionPay"},
-]
+                        WHEN LPAD(TRIM(CAST(type_reseau AS STRING)), 2, '0') = '10'
+                         AND UPPER(TRIM(COALESCE(code_carte_privative, ''))) = 'CUP' THEN 'cup'      -- réseau 10 = Trionis, précisé par le code privatif
+                        WHEN LPAD(TRIM(CAST(type_reseau AS STRING)), 2, '0') = '10'
+                         AND UPPER(TRIM(COALESCE(code_carte_privative, ''))) = 'DIN' THEN 'diners'
