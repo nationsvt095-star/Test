@@ -1,4 +1,1 @@
-                        WHEN LPAD(TRIM(CAST(type_reseau AS STRING)), 2, '0') = '10'
-                         AND UPPER(TRIM(COALESCE(code_carte_privative, ''))) = 'CUP' THEN 'cup'      -- réseau 10 = Trionis, précisé par le code privatif
-                        WHEN LPAD(TRIM(CAST(type_reseau AS STRING)), 2, '0') = '10'
-                         AND UPPER(TRIM(COALESCE(code_carte_privative, ''))) = 'DIN' THEN 'diners'
+
